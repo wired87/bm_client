@@ -1,15 +1,24 @@
+
 import * as THREE from 'three';
 import type { SwarmParams, Bounds } from '@/components/swarm-scape/types';
 
 export class Boid {
+  id: string; // Added ID
   position: THREE.Vector3;
   velocity: THREE.Vector3;
   acceleration: THREE.Vector3;
   mesh: THREE.Mesh;
   params: SwarmParams;
   bounds: Bounds;
+  originalColor: THREE.Color;
 
-  constructor(x: number, y: number, z: number, params: SwarmParams, bounds: Bounds) {
+  constructor(
+    x: number, y: number, z: number, 
+    params: SwarmParams, bounds: Bounds, 
+    color?: string, // Optional color from Firebase
+    id?: string // Optional ID from Firebase
+  ) {
+    this.id = id || crypto.randomUUID(); // Ensure boid has an ID
     this.position = new THREE.Vector3(x, y, z);
     this.velocity = new THREE.Vector3(
       Math.random() * 2 - 1,
@@ -21,11 +30,18 @@ export class Boid {
     this.params = params;
     this.bounds = bounds;
 
-    const geometry = new THREE.ConeGeometry(0.3, 1, 8); // Base radius, height, radial segments
-    geometry.rotateX(Math.PI / 2); // Point cone along Z-axis initially
-    const material = new THREE.MeshStandardMaterial({ color: 0x64B5F6, emissive: 0x26A69A, emissiveIntensity: 0.3 });
+    this.originalColor = color ? new THREE.Color(color) : new THREE.Color(0x64B5F6);
+
+    const geometry = new THREE.ConeGeometry(0.3, 1, 8); 
+    geometry.rotateX(Math.PI / 2); 
+    const material = new THREE.MeshStandardMaterial({ 
+        color: this.originalColor, 
+        emissive: new THREE.Color(0x26A69A).multiplyScalar(0.5), // Make emissive slightly less intense
+        emissiveIntensity: 0.2 
+    });
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.position.copy(this.position);
+    this.mesh.userData.id = this.id; // Store ID in mesh userData
   }
 
   update(boids: Boid[]) {
@@ -37,7 +53,6 @@ export class Boid {
     this.checkBounds();
 
     this.mesh.position.copy(this.position);
-    // Orient boid to face its velocity vector
     if (this.velocity.lengthSq() > 0.0001) {
       this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), this.velocity.clone().normalize());
     }
@@ -69,12 +84,12 @@ export class Boid {
     const steer = new THREE.Vector3();
     let count = 0;
     for (const other of boids) {
-      if (other === this) continue;
+      if (other === this || other.id === this.id) continue; // Check ID too
       const d = this.position.distanceTo(other.position);
-      if (d > 0 && d < this.params.perceptionRadius / 2) { // Separation radius smaller than general perception
+      if (d > 0 && d < this.params.perceptionRadius / 2) { 
         const diff = new THREE.Vector3().subVectors(this.position, other.position);
         diff.normalize();
-        diff.divideScalar(d); // Weight by distance
+        diff.divideScalar(d); 
         steer.add(diff);
         count++;
       }
@@ -94,7 +109,7 @@ export class Boid {
     const sum = new THREE.Vector3();
     let count = 0;
     for (const other of boids) {
-      if (other === this) continue;
+      if (other === this || other.id === this.id) continue;
       const d = this.position.distanceTo(other.position);
       if (d > 0 && d < this.params.perceptionRadius) {
         sum.add(other.velocity);
@@ -115,7 +130,7 @@ export class Boid {
     const sum = new THREE.Vector3();
     let count = 0;
     for (const other of boids) {
-      if (other === this) continue;
+      if (other === this || other.id === this.id) continue;
       const d = this.position.distanceTo(other.position);
       if (d > 0 && d < this.params.perceptionRadius) {
         sum.add(other.position);
@@ -132,9 +147,17 @@ export class Boid {
   checkBounds() {
     if (this.position.x < this.bounds.xMin) this.position.x = this.bounds.xMax;
     if (this.position.x > this.bounds.xMax) this.position.x = this.bounds.xMin;
-    if (this.position.y < this.bounds.yMin) this.position.y = this.bounds.yMax; // Allow some vertical movement
+    if (this.position.y < this.bounds.yMin) this.position.y = this.bounds.yMax; 
     if (this.position.y > this.bounds.yMax) this.position.y = this.bounds.yMin;
     if (this.position.z < this.bounds.zMin) this.position.z = this.bounds.zMax;
     if (this.position.z > this.bounds.zMax) this.position.z = this.bounds.zMin;
+  }
+
+  // Method to update boid color if changed via Firebase
+  setColor(newColor: string) {
+    this.originalColor.set(newColor);
+    if (this.mesh.material instanceof THREE.MeshStandardMaterial) {
+        this.mesh.material.color.set(this.originalColor);
+    }
   }
 }

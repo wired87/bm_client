@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,19 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Sparkles, DatabaseZap, RefreshCcw, Settings2 } from 'lucide-react';
+import { Sparkles, DatabaseZap, RefreshCcw, Settings2, Users } from 'lucide-react'; // Added Users icon
 import type { SwarmParams } from './types';
 import { suggestParameters } from '@/ai/flows/dynamic-parameter-suggestions';
 import { useToast } from "@/hooks/use-toast";
 
 interface ControlsPanelProps {
-  swarmParams: SwarmParams;
-  onSwarmParamsChange: (newParams: Partial<SwarmParams>) => void;
+  swarmParams: Omit<SwarmParams, 'numBoids'>; // numBoids is now from Firebase
+  onSwarmParamsChange: (newParams: Partial<Omit<SwarmParams, 'numBoids'>>) => void;
   onAdjustHeightMap: () => void;
   onResetCamera: () => void;
   aiExplanation: string | null;
   isAiLoading: boolean;
   onAiLoadingChange: (isLoading: boolean) => void;
+  numBoids: number; // Display current boid count from Firebase
 }
 
 const ControlsPanel: React.FC<ControlsPanelProps> = ({
@@ -31,22 +33,22 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   aiExplanation,
   isAiLoading,
   onAiLoadingChange,
+  numBoids,
 }) => {
   const [desiredBehavior, setDesiredBehavior] = useState<string>("");
   const { toast } = useToast();
 
-  // Local state for sliders to provide smoother UI updates
-  const [localParams, setLocalParams] = useState<SwarmParams>(swarmParams);
+  const [localParams, setLocalParams] = useState<Omit<SwarmParams, 'numBoids'>>(swarmParams);
 
   useEffect(() => {
     setLocalParams(swarmParams);
   }, [swarmParams]);
 
-  const handleSliderChange = (paramName: keyof SwarmParams, value: number) => {
+  const handleSliderChange = (paramName: keyof Omit<SwarmParams, 'numBoids'>, value: number) => {
     setLocalParams(prev => ({ ...prev, [paramName]: value }));
   };
 
-  const handleSliderCommit = (paramName: keyof SwarmParams, value: number) => {
+  const handleSliderCommit = (paramName: keyof Omit<SwarmParams, 'numBoids'>, value: number) => {
     onSwarmParamsChange({ [paramName]: value });
   };
 
@@ -66,7 +68,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
         desiredSwarmBehavior: desiredBehavior,
         currentParameters: currentParamsString,
       });
-      onSwarmParamsChange(suggestions);
+      onSwarmParamsChange(suggestions); // This will update cohesion, separation, alignment
       toast({ title: "AI Suggestion Applied", description: "Swarm parameters updated based on AI suggestion." });
     } catch (error) {
       console.error("Error fetching AI suggestions:", error);
@@ -77,7 +79,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   };
   
   const handleAdjustHeightMapClick = () => {
-    onAiLoadingChange(true); // Parent will handle setting it to false after AI call
+    onAiLoadingChange(true); 
     onAdjustHeightMap();
   }
 
@@ -95,6 +97,12 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
           <AccordionItem value="item-1" className="border-b-sidebar-border">
             <AccordionTrigger className="text-base font-semibold hover:no-underline text-sidebar-foreground hover:text-sidebar-accent-foreground [&[data-state=open]>svg]:text-sidebar-accent-foreground">Swarm Dynamics</AccordionTrigger>
             <AccordionContent className="pt-2 space-y-4">
+              <div className="flex items-center justify-between p-2 bg-sidebar-accent rounded-md">
+                <Label className="text-sm flex items-center text-sidebar-accent-foreground">
+                  <Users className="mr-2 h-4 w-4" /> Number of Boids (from Firebase):
+                </Label>
+                <span className="text-sm font-semibold text-sidebar-accent-foreground">{numBoids}</span>
+              </div>
               <div>
                 <Label htmlFor="cohesion" className="text-sm">Cohesion: {localParams.cohesion.toFixed(2)}</Label>
                 <Slider
@@ -128,17 +136,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                    className="[&>span:first-child]:bg-primary [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary-foreground"
                 />
               </div>
-               <div>
-                <Label htmlFor="numBoids" className="text-sm">Number of Boids: {localParams.numBoids}</Label>
-                <Slider
-                  id="numBoids"
-                  min={10} max={300} step={10}
-                  value={[localParams.numBoids]}
-                  onValueChange={([val]) => handleSliderChange('numBoids', val)}
-                  onValueCommit={([val]) => handleSliderCommit('numBoids', val)}
-                   className="[&>span:first-child]:bg-primary [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary-foreground"
-                />
-              </div>
+              {/* numBoids slider removed as it's Firebase driven */}
               <div className="space-y-2 pt-2">
                 <Label htmlFor="desiredBehavior" className="text-sm">Desired Swarm Behavior (for AI)</Label>
                 <Input 

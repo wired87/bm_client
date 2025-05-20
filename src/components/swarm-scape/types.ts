@@ -2,7 +2,7 @@ export interface SwarmParams {
   cohesion: number;
   separation: number;
   alignment: number;
-  numBoids: number;
+  // numBoids: number; // Controlled by Firebase now
   speedLimit: number;
   forceLimit: number;
   perceptionRadius: number;
@@ -20,4 +20,13 @@ export interface Bounds {
   yMax: number;
   zMin: number;
   zMax: number;
+}
+
+export interface FirebaseBoidConfig {
+  id: string; // Firebase key
+  initialX?: number;
+  initialY?: number;
+  initialZ?: number;
+  color?: string; // e.g., '#FF0000'
+  // Add other potential properties that can be driven by Firebase
 }
