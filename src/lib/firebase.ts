@@ -4,13 +4,14 @@ import { getDatabase } from 'firebase/database';
 
 // TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCdFi3p3pkWK9UkZc0xrceQIkyzQdNLa24",
+  authDomain: "bestbrain-39ce7.firebaseapp.com",
+  databaseURL: "https://bestbrain-39ce7-default-rtdb.firebaseio.com",
+  projectId: "bestbrain-39ce7",
+  storageBucket: "bestbrain-39ce7.firebasestorage.app",
+  messagingSenderId: "68303113625",
+  appId: "1:68303113625:web:eef53bfe025dd482add708",
+  measurementId: "G-WD3S9Y98MR"
 };
 
 // Initialize Firebase
